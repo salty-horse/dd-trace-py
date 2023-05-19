@@ -160,7 +160,7 @@ class TestGrokzenRedisClusterPatch(TracerTestCase):
         spans = self.get_spans()
         assert len(spans) == 1
         span = spans[0]
-        assert span.service != "mysvc"
+        assert span.service != "mysvc", "Expected NOT 'mysvc' and got {}".format(span.service)
 
     @TracerTestCase.run_in_subprocess(env_overrides=dict(DD_SERVICE="mysvc", DD_TRACE_SPAN_ATTRIBUTE_SCHEMA="v1"))
     def test_user_specified_service_v1(self):
@@ -241,7 +241,7 @@ class TestGrokzenRedisClusterPatch(TracerTestCase):
         spans = self.get_spans()
         assert len(spans) == 1
         span = spans[0]
-        assert span.name == "redis.command"
+        assert span.name == "redis.command", "Expected 'redis.command' and got {}".format(span.name)
 
 
 @pytest.mark.snapshot

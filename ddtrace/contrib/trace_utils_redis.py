@@ -39,11 +39,24 @@ def _extract_conn_tags(conn_kwargs):
 @contextmanager
 def _trace_redis_cmd(pin, config_integration, instance, args):
     """Create a span for the execute command method and tag it"""
-    with pin.tracer.trace(
-        schematize_cache_operation(redisx.CMD, cache_provider=redisx.APP),
-        service=trace_utils.ext_service(pin, config_integration),
-        span_type=SpanTypes.REDIS,
+    from ddtrace.context import RedisCommandSpanStartEventContext
+
+    with pin.tracer._integration_trace(
+        RedisCommandSpanStartEventContext(
+            pin=pin,
+            integration_name=config_integration.integration_name,
+            v0_service=config_integration.service,
+            v0_service_name=config_integration.service_name,
+            v0_service_default=config_integration._default_service,
+            provider=redisx.APP,
+            v0_operation_name=redisx.CMD,
+        )
     ) as span:
+        # with pin.tracer.trace(
+        #    schematize_cache_operation(redisx.CMD, cache_provider=redisx.APP),
+        #    service=trace_utils.ext_service(pin, config_integration),
+        #    span_type=SpanTypes.REDIS,
+        # ) as span:
         span.set_tag_str(SPAN_KIND, SpanKind.CLIENT)
         span.set_tag_str(COMPONENT, config_integration.integration_name)
         span.set_tag_str(db.SYSTEM, redisx.APP)

@@ -1,0 +1,27 @@
+
+{
+    "service_context": {
+        "default": "unnamed-python-service",
+        "DD_SERVICE": os.environ.get("DD_SERVICE"),
+        "DD_{}_SERVICE".format(integration.upper()): os.environ.get(
+            "DD_{}_SERVICE".format(integration.upper())
+        ),
+        "DD_TAGS": {"service": pin.service},
+        "integration": integration,
+        "parent_service": pin.tracer.context_provider.active().service
+        if pin.tracer.context_provider.active()
+        else None,
+        "user_specified": pin.service,
+        "v0_service": v0_service_default,
+        "v0_service_name": v0_service_default,
+        "v0_service_default": v0_service_default,
+    },
+    "method_context": {
+        "method_class": method_class,  # "Storage", "Cache", ...
+        "method_class_type": method_class_type,  # "Command", ...
+        "method_type": method_type,  # "sql", "cassandra", ...
+        "v0_operation_name": v0_operation_name,
+        "resource_name": resource_name,
+        "provider": provider,
+    },
+}

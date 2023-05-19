@@ -803,6 +803,54 @@ class Tracer(object):
         else:
             log.log(level, msg)
 
+    def _integration_trace_v0(self, event_context):
+        event_context = event_context._context
+        service_hierarchy = [
+            event_context["service"]["user_specified"],
+            event_context["service"]["DD_{}_SERVICE".format(event_context["service"]["integration"].upper())],
+            event_context["service"]["v0_service"],
+            event_context["service"]["v0_service_name"],
+            event_context["service"]["v0_service_default"],
+            event_context["service"]["parent_service"],
+            event_context["service"]["DD_SERVICE"],
+            event_context["service"]["DD_TAGS"]["service"],
+            None,
+        ]
+        valid_services = [s for s in service_hierarchy if s is not None]
+        service = valid_services[0] if valid_services else None
+        operation = event_context["method_info"]["v0_operation_name"]
+        span_type = event_context["method_info"]["method_type"]
+        resource = event_context["method_info"]["resource_name"]
+
+        return self.trace(operation, service=service, span_type=span_type, resource=resource)
+
+    def _integration_trace_v1(self, event_context):
+        event_context = event_context._context
+        service_hierarchy = [
+            event_context["service"]["user_specified"],
+            event_context["service"]["DD_{}_SERVICE".format(event_context["service"]["integration"].upper())],
+            event_context["service"]["DD_SERVICE"],
+            event_context["service"]["DD_TAGS"]["service"],
+            event_context["service"]["default"],
+        ]
+        service = [s for s in service_hierarchy if s is not None][0]
+
+        operation = event_context["method_info"]["v0_operation_name"]
+        if event_context["method_info"]["method_class"] == "Storage":
+            if event_context["method_info"]["method_class_type"] == "Command":
+                operation = "{}.query".format(event_context["method_info"]["provider"])
+        elif event_context["method_info"]["method_class"] == "Cache":
+            if event_context["method_info"]["method_class_type"] == "Command":
+                operation = "{}.command".format(event_context["method_info"]["provider"])
+        span_type = event_context["method_info"]["method_type"]
+        resource = event_context["method_info"]["resource_name"]
+
+        return self.trace(operation, service=service, span_type=span_type, resource=resource)
+
+    _integration_trace = _integration_trace_v0
+    if os.environ.get("DD_TRACE_SPAN_ATTRIBUTE_SCHEMA") == "v1":
+        _integration_trace = _integration_trace_v1
+
     def trace(self, name, service=None, resource=None, span_type=None):
         # type: (str, Optional[str], Optional[str], Optional[str]) -> Span
         """Activate and return a new span that inherits from the current active span.

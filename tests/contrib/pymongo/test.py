@@ -607,7 +607,7 @@ class TestPymongoPatchConfigured(TracerTestCase, PymongoCore):
         client["testdb"].drop_collection("whatever")
         spans = tracer.pop()
         assert len(spans) == 1
-        assert spans[0].service == "mypymongo"
+        assert spans[0].service == "mypymongo", "Expected 'mypymongo' but got {}".format(spans[0].service)
 
     @TracerTestCase.run_in_subprocess(
         env_overrides=dict(DD_SERVICE="mysvc", DD_PYMONGO_SERVICE="mypymongo", DD_TRACE_SPAN_ATTRIBUTE_SCHEMA="v1")
@@ -652,7 +652,7 @@ class TestPymongoPatchConfigured(TracerTestCase, PymongoCore):
         client["testdb"].drop_collection("whatever")
         spans = tracer.pop()
         assert len(spans) == 1
-        assert spans[0].name == "mongodb.query"
+        assert spans[0].name == "mongodb.query", "Expected 'mongodb.query' but got {} instead".format(spans[0].name)
 
     def test_patch_with_disabled_tracer(self):
         tracer, client = self.get_tracer_and_client()

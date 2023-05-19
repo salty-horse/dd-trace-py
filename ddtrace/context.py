@@ -228,3 +228,152 @@ class Context(object):
         )
 
     __str__ = __repr__
+
+
+import os
+
+from ddtrace import config
+
+
+class SpanStartEventContext:
+    def __init__(
+        self,
+        pin=None,
+        integration=None,
+        v0_service=None,
+        v0_service_name=None,
+        v0_service_default=None,
+        v0_operation_name=None,
+        method_class=None,
+        method_class_type=None,
+        method_type=None,
+        resource_name=None,
+        provider=None,
+    ):
+
+        self._context = {
+            "service": {
+                "default": "unnamed-python-service",
+                "DD_SERVICE": os.environ.get("DD_SERVICE"),
+                "DD_{}_SERVICE".format(integration.upper()): os.environ.get(
+                    "DD_{}_SERVICE".format(integration.upper())
+                ),
+                "DD_TAGS": {"service": pin.service},
+                "integration": integration,
+                "parent_service": pin.tracer.context_provider.active().service
+                if pin.tracer.context_provider.active()
+                else None,
+                "user_specified": pin.service,
+                "v0_service": v0_service_default,
+                "v0_service_name": v0_service_default,
+                "v0_service_default": v0_service_default,
+            },
+            "method_info": {
+                "method_class": method_class,  # Database
+                "method_class_type": method_class_type,  # Command
+                "method_type": method_type,  # Command
+                "v0_operation_name": v0_operation_name,
+                "resource_name": resource_name,
+                "provider": provider,
+            },
+        }
+
+
+class SqlCommandSpanStartEventContext(SpanStartEventContext):
+    def __init__(
+        self,
+        pin=None,
+        integration_name=None,
+        v0_service_default=None,
+        resource_name=None,
+        provider=None,
+        method_type="sql",
+        v0_operation_name=None,
+    ):
+        super().__init__(
+            pin=pin,
+            integration=integration_name,
+            v0_service_default=v0_service_default,
+            v0_operation_name=v0_operation_name,
+            method_class="Storage",
+            method_class_type="Command",
+            method_type=method_type,
+            resource_name=resource_name,
+            provider=provider,
+        )
+
+
+class SqlCommandSpanStartEventContext(SpanStartEventContext):
+    def __init__(
+        self,
+        pin=None,
+        integration_name=None,
+        v0_service_default=None,
+        resource_name=None,
+        provider=None,
+        method_type="sql",
+        v0_operation_name=None,
+    ):
+        super().__init__(
+            pin=pin,
+            integration=integration_name,
+            v0_service_default=v0_service_default,
+            v0_operation_name=v0_operation_name,
+            method_class="Storage",
+            method_class_type="Command",
+            method_type=method_type,
+            resource_name=resource_name,
+            provider=provider,
+        )
+
+
+class MongoDbCommandSpanStartEventContext(SpanStartEventContext):
+    def __init__(
+        self,
+        pin=None,
+        integration_name=None,
+        v0_service_default=None,
+        resource_name=None,
+        provider=None,
+        method_type="mongodb",
+        v0_operation_name=None,
+    ):
+        super().__init__(
+            pin=pin,
+            integration=integration_name,
+            v0_service_default=v0_service_default,
+            v0_operation_name=v0_operation_name,
+            method_class="Storage",
+            method_class_type="Command",
+            method_type=method_type,
+            resource_name=resource_name,
+            provider=provider,
+        )
+
+
+class RedisCommandSpanStartEventContext(SpanStartEventContext):
+    def __init__(
+        self,
+        pin=None,
+        integration_name=None,
+        v0_service=None,
+        v0_service_name=None,
+        v0_service_default=None,
+        resource_name=None,
+        provider=None,
+        method_type="redis",
+        v0_operation_name=None,
+    ):
+        super().__init__(
+            pin=pin,
+            integration=integration_name,
+            v0_service=v0_service,
+            v0_service_name=v0_service_name,
+            v0_service_default=v0_service_default,
+            v0_operation_name=v0_operation_name,
+            method_class="Cache",
+            method_class_type="Command",
+            method_type=method_type,
+            resource_name=resource_name,
+            provider=provider,
+        )

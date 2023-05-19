@@ -1,4 +1,6 @@
+import os
 import typing
+from unittest import mock
 
 import pytest
 import redis
@@ -114,7 +116,7 @@ async def test_long_command(redis_client):
 @pytest.mark.asyncio
 @pytest.mark.snapshot(wait_for_num_traces=3)
 async def test_override_service_name(redis_client):
-    with override_config("redis", dict(service_name="myredis")):
+    with mock.patch.dict(os.environ, {"DD_REDIS_SERVICE": "myredis"}):
         val = await redis_client.get("cheese")
         assert val is None
         await redis_client.set("cheese", "my-cheese")

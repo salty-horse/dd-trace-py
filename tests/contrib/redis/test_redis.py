@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import os
+from unittest import mock
+
 import redis
 
 import ddtrace
@@ -291,7 +294,7 @@ class TestRedisPatch(TracerTestCase):
         self.reset()
 
         # Global config
-        with self.override_config("redis", dict(service="cfg-redis")):
+        with mock.patch.dict(os.environ, {"DD_REDIS_SERVICE": "cfg-redis"}):
             self.r.get("cheese")
             span = self.get_spans()[0]
             assert span.service == "cfg-redis", span.service
@@ -315,7 +318,7 @@ class TestRedisPatch(TracerTestCase):
         self.reset()
 
         # Global config
-        with self.override_config("redis", dict(service="cfg-redis")):
+        with mock.patch.dict(os.environ, {"DD_REDIS_SERVICE": "cfg-redis"}):
             self.r.get("cheese")
             span = self.get_spans()[0]
             assert span.service == "cfg-redis", span.service
@@ -495,7 +498,7 @@ class TestRedisPatchSnapshot(TracerTestCase):
         self.reset()
 
         # Global config
-        with self.override_config("redis", dict(service="cfg-redis")):
+        with mock.patch.dict(os.environ, {"DD_REDIS_SERVICE": "cfg-redis"}):
             self.r.get("cheese")
 
         self.reset()

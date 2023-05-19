@@ -255,10 +255,17 @@ class TracedSocket(ObjectProxy):
 
     def __trace(self, cmd):
         pin = ddtrace.Pin.get_from(self)
-        s = pin.tracer.trace(
-            schematize_database_operation("pymongo.cmd", database_provider="mongodb"),
-            span_type=SpanTypes.MONGODB,
-            service=pin.service,
+        from ddtrace.context import MongoDbCommandSpanStartEventContext
+
+        s = pin.tracer._integration_trace(
+            MongoDbCommandSpanStartEventContext(
+                pin=pin,
+                integration_name="pymongo",
+                v0_service_default="pymongo",
+                method_type="mongodb",
+                provider="mongodb",
+                v0_operation_name="pymongo.cmd",
+            )
         )
 
         s.set_tag_str(COMPONENT, config.pymongo.integration_name)

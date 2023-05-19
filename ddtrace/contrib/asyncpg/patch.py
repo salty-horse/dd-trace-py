@@ -97,12 +97,24 @@ async def _traced_connect(asyncpg, pin, func, instance, args, kwargs):
 
 
 async def _traced_query(pin, method, query, args, kwargs):
-    with pin.tracer.trace(
-        schematize_database_operation("postgres.query", database_provider="postgresql"),
-        resource=query,
-        service=ext_service(pin, config.asyncpg),
-        span_type=SpanTypes.SQL,
+    from ddtrace.context import SqlCommandSpanStartEventContext
+
+    with pin.tracer._integration_trace(
+        SqlCommandSpanStartEventContext(
+            pin=pin,
+            integration_name="asyncpg",
+            v0_service_default="postgres",
+            resource_name=query,
+            provider="postgresql",
+            v0_operation_name="postgres.query",
+        )
     ) as span:
+        # with pin.tracer.trace(
+        #    schematize_database_operation("postgres.query", database_provider="postgresql"),
+        #    resource=query,
+        #    service=ext_service(pin, config.asyncpg),
+        #    span_type=SpanTypes.SQL,
+        # ) as span:
         span.set_tag_str(COMPONENT, config.asyncpg.integration_name)
         span.set_tag_str(db.SYSTEM, DBMS_NAME)
 
