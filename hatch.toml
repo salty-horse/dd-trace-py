@@ -1,0 +1,150 @@
+[envs.lint]
+detached = true
+# TOOD: Move to optional dependencies in pyproject.toml
+dependencies = [
+    "black==21.4b2",
+    # See https://github.com/psf/black/issues/2964 for incompatibility with click==8.1.0
+    "click<8.1.0",
+    "cython-lint==0.15.0",
+    "isort==5.12.0",
+    "mypy==0.991",
+    "envier==0.4.0",
+    "types-attrs==19.1.0",
+    "types-docutils==0.19.1.1",
+    "types-protobuf==3.20.4.5",
+    "types-PyYAML==6.0.12.2",
+    "types-setuptools==65.6.0.0",
+    "types-six==1.16.21.4",
+    "codespell==2.1.0",
+    "bandit==1.7.5",
+    "ddapm-test-agent==1.10.1",
+]
+
+[envs.lint.scripts]
+style = [
+    "isort -c {args:.}",
+    "black --check --diff {args:.}",
+]
+format = [
+    "isort {args:.}",
+    "black {args:.}",
+    "ddapm-test-agent-fmt tests/snapshots/",
+]
+typing = "mypy"
+tools = [
+    "cython-lint {args:.}",
+    "codespell --skip=ddwaf.h ddtrace/ tests/",
+    "bandit -c pyproject.toml -r ddtrace/",
+]
+all = [
+    "format",
+    "typing",
+    "tools",
+]
+
+[envs.wheels]
+detached = true
+
+[envs.wheels.scripts]
+build = [
+    "scripts/build-wheels {args}",
+    "cibuildwheel {args}
+]
+
+# 2.0.0 dropped support for 2.7 and 3.5
+[[envs.wheels.matrix]]
+version = ["1.12.0", "2.13.1"]
+
+[envs.wheels.overrides]
+matrix.version.dependencies = [
+    { value = "cibuildwheel=={matrix:version}"}
+]
+matrix.version.env-vars = [
+    { value = "CIBW_BUILD", key = "cp27* cp35*", if = ["20.15.1"]}
+]
+platform.macos.env-vars = [
+    { value = "CIBW_ARCHS", key = "aarch64"}  # M1 macos
+]
+
+[envs.wheels_deps]
+detached = true
+
+[[envs.wheels_deps.matrix]]
+python = ["2.7", "3.5", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+
+[envs.wheels_deps.scripts]
+download = [
+    "pip download ddtrace --dest wheelhouse --only-binary :all: --pre --find-links ./wheelhouse/ --no-cache-dir"
+]
+
+[envs.default]
+dependencies = [
+    "mock",
+    "pytest",
+    "pytest-mock",
+    "coverage",
+    "pytest-cov",
+    "opentracing",
+    "hypothesis<6.45.1",
+]
+skip-install = true
+# It would be nice to be able to add a install from wheelhouse step here
+# pre-install-commands = [
+#     "pip install ddtrace --pre --find-links ./wheelhouse --no-cache-dir --no-index",
+# ]
+
+[envs.default.env-vars]
+DD_TESTING_RAISE = "1"
+DD_REMOTE_CONFIGURATION_ENABLED = "false"
+
+
+[envs.internal]
+extra-dependencies = [
+    "httpretty==0.9.7",
+    "gevent",
+    "pytest-asyncio; python_version~='3.0'",
+]
+
+[envs.internal.scripts]
+test = [
+     "pytest tests/internal/ {args}",
+]
+
+[[envs.internal.matrix]]
+python = ["2.7", "3.5", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+
+[envs.fastapi]
+extra-dependencies = [
+    "httpx",
+    "pytest-asyncio",
+    "requests",
+    "aiofiles",
+]
+
+[envs.fastapi.scripts]
+test = "pytest tests/contrib/fastapi/ {args}"
+
+[[envs.fastapi.matrix]]
+python = ["3.6"]
+version = ["0.64.0", "0.83.0"]
+
+[[envs.fastapi.matrix]]
+python = ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+version = ["0.64.0", "0.90.0"]
+
+[envs.fastapi.overrides]
+matrix.version.dependencies = [
+  { value = "fastapi~={matrix:version:}" },
+]
+
+[envs.fastapi_latest]
+template = "fastapi"
+
+[[envs.fastapi_latest.matrix]]
+python = ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+
+# We need a dependency override for any environment that matches
+[envs.fastapi_latest.overrides]
+name.".+".dependencies = [
+  { value = "fastapi" },
+]

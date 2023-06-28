@@ -1566,6 +1566,7 @@ venv = Venv(
         Venv(
             name="asgi",
             pkgs={
+                "ddtrace": latest,
                 "pytest-asyncio": latest,
                 "httpx": latest,
                 "asgiref": ["~=3.0.0", "~=3.0", latest],
