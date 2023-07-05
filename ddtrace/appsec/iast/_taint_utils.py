@@ -11,10 +11,11 @@ log = get_logger(__name__)
 
 
 class LazyTaintList(list):
-    def __init__(self, *args, origins=(0, 0), override_pyobject_tainted=False):
+    def __init__(self, *args, origins=(0, 0), override_pyobject_tainted=False, source_name="[]"):
         self.origins = origins
         self.origin_value = origins[1]
         self.override_pyobject_tainted = override_pyobject_tainted
+        self.source_name = source_name
         super(LazyTaintList, self).__init__(*args)
 
     def __getitem__(self, key):
@@ -27,7 +28,10 @@ class LazyTaintList(list):
                 self[key] = value
             elif isinstance(value, list) and not isinstance(value, LazyTaintList):
                 value = LazyTaintList(
-                    value, origins=self.origins, override_pyobject_tainted=self.override_pyobject_tainted
+                    value,
+                    origins=self.origins,
+                    override_pyobject_tainted=self.override_pyobject_tainted,
+                    source_name=self.source_name,
                 )
                 if isinstance(key, int):
                     self[key] = value
@@ -35,7 +39,10 @@ class LazyTaintList(list):
                 if not is_pyobject_tainted(value) or self.override_pyobject_tainted:
                     try:
                         value = taint_pyobject(
-                            pyobject=value, source_name=key, source_value=value, source_origin=self.origin_value
+                            pyobject=value,
+                            source_name=self.source_name,
+                            source_value=value,
+                            source_origin=self.origin_value,
                         )
                         self[key] = value
                     except SystemError:
@@ -68,7 +75,10 @@ class LazyTaintDict(dict):
                 self[key] = value
             elif isinstance(value, list) and not isinstance(value, LazyTaintList):
                 value = LazyTaintList(
-                    value, origins=self.origins, override_pyobject_tainted=self.override_pyobject_tainted
+                    value,
+                    origins=self.origins,
+                    override_pyobject_tainted=self.override_pyobject_tainted,
+                    source_name=key,
                 )
                 self[key] = value
             elif isinstance(value, (str, bytes, bytearray)):
